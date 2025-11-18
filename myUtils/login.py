@@ -66,12 +66,36 @@ async def douyin_cookie_gen(id,status_queue):
         await browser.close()
         with sqlite3.connect(Path(BASE_DIR / "db" / "database.db")) as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                                INSERT INTO user_info (type, filePath, userName, status)
-                                VALUES (?, ?, ?, ?)
-                                ''', (3, f"{uuid_v1}.json", id, 1))
+
+            # 检查是否已存在该账户
+            cursor.execute('SELECT id, filePath FROM user_info WHERE type = ? AND userName = ?', (3, id))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                # 更新现有账户
+                old_file_path = existing_user[1]
+
+                # 删除旧的cookie文件
+                old_cookie_file = cookies_dir / old_file_path
+                if old_cookie_file.exists():
+                    old_cookie_file.unlink()
+                    print(f"🗑️ 已删除旧cookie文件: {old_file_path}")
+
+                cursor.execute('''
+                    UPDATE user_info
+                    SET filePath = ?, status = ?
+                    WHERE type = ? AND userName = ?
+                    ''', (f"{uuid_v1}.json", 1, 3, id))
+                print("✅ 用户账户已更新")
+            else:
+                # 插入新账户
+                cursor.execute('''
+                    INSERT INTO user_info (type, filePath, userName, status)
+                    VALUES (?, ?, ?, ?)
+                    ''', (3, f"{uuid_v1}.json", id, 1))
+                print("✅ 新用户账户已创建")
+
             conn.commit()
-            print("✅ 用户状态已记录")
         status_queue.put("200")
 
 
@@ -145,12 +169,36 @@ async def get_tencent_cookie(id,status_queue):
 
         with sqlite3.connect(Path(BASE_DIR / "db" / "database.db")) as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                                INSERT INTO user_info (type, filePath, userName, status)
-                                VALUES (?, ?, ?, ?)
-                                ''', (2, f"{uuid_v1}.json", id, 1))
+
+            # 检查是否已存在该账户
+            cursor.execute('SELECT id, filePath FROM user_info WHERE type = ? AND userName = ?', (2, id))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                # 更新现有账户
+                old_file_path = existing_user[1]
+
+                # 删除旧的cookie文件
+                old_cookie_file = cookies_dir / old_file_path
+                if old_cookie_file.exists():
+                    old_cookie_file.unlink()
+                    print(f"🗑️ 已删除旧cookie文件: {old_file_path}")
+
+                cursor.execute('''
+                    UPDATE user_info
+                    SET filePath = ?, status = ?
+                    WHERE type = ? AND userName = ?
+                    ''', (f"{uuid_v1}.json", 1, 2, id))
+                print("✅ 用户账户已更新")
+            else:
+                # 插入新账户
+                cursor.execute('''
+                    INSERT INTO user_info (type, filePath, userName, status)
+                    VALUES (?, ?, ?, ?)
+                    ''', (2, f"{uuid_v1}.json", id, 1))
+                print("✅ 新用户账户已创建")
+
             conn.commit()
-            print("✅ 用户状态已记录")
         status_queue.put("200")
 
 # 快手登录
@@ -219,12 +267,36 @@ async def get_ks_cookie(id,status_queue):
 
         with sqlite3.connect(Path(BASE_DIR / "db" / "database.db")) as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                                        INSERT INTO user_info (type, filePath, userName, status)
-                                        VALUES (?, ?, ?, ?)
-                                        ''', (4, f"{uuid_v1}.json", id, 1))
+
+            # 检查是否已存在该账户
+            cursor.execute('SELECT id, filePath FROM user_info WHERE type = ? AND userName = ?', (4, id))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                # 更新现有账户
+                old_file_path = existing_user[1]
+
+                # 删除旧的cookie文件
+                old_cookie_file = cookies_dir / old_file_path
+                if old_cookie_file.exists():
+                    old_cookie_file.unlink()
+                    print(f"🗑️ 已删除旧cookie文件: {old_file_path}")
+
+                cursor.execute('''
+                    UPDATE user_info
+                    SET filePath = ?, status = ?
+                    WHERE type = ? AND userName = ?
+                    ''', (f"{uuid_v1}.json", 1, 4, id))
+                print("✅ 用户账户已更新")
+            else:
+                # 插入新账户
+                cursor.execute('''
+                    INSERT INTO user_info (type, filePath, userName, status)
+                    VALUES (?, ?, ?, ?)
+                    ''', (4, f"{uuid_v1}.json", id, 1))
+                print("✅ 新用户账户已创建")
+
             conn.commit()
-            print("✅ 用户状态已记录")
         status_queue.put("200")
 
 # 小红书登录
