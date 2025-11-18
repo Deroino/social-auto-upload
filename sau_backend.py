@@ -10,7 +10,7 @@ from flask_cors import CORS
 from myUtils.auth import check_cookie
 from flask import Flask, request, jsonify, Response, render_template, send_from_directory
 from conf import BASE_DIR
-from myUtils.login import get_tencent_cookie, douyin_cookie_gen, get_ks_cookie, xiaohongshu_cookie_gen
+from myUtils.login import get_tencent_cookie, douyin_cookie_gen, get_ks_cookie, xiaohongshu_cookie_gen, baijiahao_cookie_gen, tiktok_cookie_gen
 from myUtils.postVideo import post_video_tencent, post_video_DouYin, post_video_ks, post_video_xhs
 
 active_queues = {}
@@ -650,6 +650,16 @@ def run_async_function(type,id,status_queue):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(get_ks_cookie(id,status_queue))
+            loop.close()
+        case '5':
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(baijiahao_cookie_gen(id,status_queue))
+            loop.close()
+        case '6':
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(tiktok_cookie_gen(id,status_queue))
             loop.close()
 
 # SSE 流生成器函数
