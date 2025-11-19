@@ -11,7 +11,7 @@ from myUtils.auth import check_cookie
 from flask import Flask, request, jsonify, Response, render_template, send_from_directory
 from conf import BASE_DIR
 from myUtils.login import get_tencent_cookie, douyin_cookie_gen, get_ks_cookie, xiaohongshu_cookie_gen, baijiahao_cookie_gen, tiktok_cookie_gen
-from myUtils.postVideo import post_video_tencent, post_video_DouYin, post_video_ks, post_video_xhs
+from myUtils.postVideo import post_video_tencent, post_video_DouYin, post_video_ks, post_video_xhs, post_video_baijiahao, post_video_tiktok
 
 active_queues = {}
 app = Flask(__name__)
@@ -415,6 +415,12 @@ def postVideo():
         case 4:
             post_video_ks(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
                       start_days)
+        case 5:
+            post_video_baijiahao(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                      start_days)
+        case 6:
+            post_video_tiktok(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                      start_days, thumbnail_path)
     # 返回响应给客户端
     return jsonify(
         {
@@ -480,6 +486,8 @@ def postVideoBatch():
             category = None
         productLink = data.get('productLink', '')
         productTitle = data.get('productTitle', '')
+        thumbnail_path = data.get('thumbnail', '')  # 缩略图路径参数
+        is_draft = data.get('isDraft', False)  # 新增参数：是否保存为草稿
 
         videos_per_day = data.get('videosPerDay')
         daily_times = data.get('dailyTimes')
@@ -489,16 +497,23 @@ def postVideoBatch():
         print("Account List:", account_list)
         match type:
             case 1:
-                return
+                post_video_xhs(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                           start_days)
             case 2:
                 post_video_tencent(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
-                                   start_days)
+                                   start_days, is_draft)
             case 3:
                 post_video_DouYin(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
-                          start_days, productLink, productTitle)
+                          start_days, thumbnail_path, productLink, productTitle)
             case 4:
                 post_video_ks(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
                           start_days)
+            case 5:
+                post_video_baijiahao(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                          start_days)
+            case 6:
+                post_video_tiktok(title, file_list, tags, account_list, category, enableTimer, videos_per_day, daily_times,
+                          start_days, thumbnail_path)
     # 返回响应给客户端
     return jsonify(
         {

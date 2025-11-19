@@ -60,6 +60,7 @@ export const useAccountStore = defineStore('account', () => {
     addAccount,
     updateAccount,
     deleteAccount,
-    getAccountsByPlatform
+    getAccountsByPlatform,
+    platformTypes
   }
 })

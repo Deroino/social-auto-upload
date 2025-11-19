@@ -6,6 +6,8 @@ from uploader.douyin_uploader.main import DouYinVideo
 from uploader.ks_uploader.main import KSVideo
 from uploader.tencent_uploader.main import TencentVideo
 from uploader.xiaohongshu_uploader.main import XiaoHongShuVideo
+from uploader.baijiahao_uploader.main import BaiJiaHaoVideo
+from uploader.tk_uploader.main_chrome import TiktokVideo
 from utils.constant import TencentZoneTypes
 from utils.files_times import generate_schedule_time_next_day
 
@@ -86,6 +88,44 @@ def post_video_xhs(title,files,tags,account_file,category=TencentZoneTypes.LIFES
             app = XiaoHongShuVideo(title, file, tags, publish_datetimes, cookie)
             asyncio.run(app.main(), debug=False)
 
+
+
+def post_video_baijiahao(title,files,tags,account_file,category=TencentZoneTypes.LIFESTYLE.value,enableTimer=False,videos_per_day = 1, daily_times=None,start_days = 0):
+    # 生成文件的完整路径
+    account_file = [Path(BASE_DIR / "cookiesFile" / file) for file in account_file]
+    files = [Path(BASE_DIR / "videoFile" / file) for file in files]
+    if enableTimer:
+        publish_datetimes = generate_schedule_time_next_day(len(files), videos_per_day, daily_times,start_days)
+    else:
+        publish_datetimes = [0 for i in range(len(files))]
+    for index, file in enumerate(files):
+        for cookie in account_file:
+            print(f"文件路径{str(file)}")
+            # 打印视频文件名、标题和 hashtag
+            print(f"视频文件名：{file}")
+            print(f"标题：{title}")
+            print(f"Hashtag：{tags}")
+            app = BaiJiaHaoVideo(title, str(file), tags, publish_datetimes[index], cookie)
+            asyncio.run(app.main(), debug=False)
+
+
+def post_video_tiktok(title,files,tags,account_file,category=TencentZoneTypes.LIFESTYLE.value,enableTimer=False,videos_per_day = 1, daily_times=None,start_days = 0, thumbnail_path = ''):
+    # 生成文件的完整路径
+    account_file = [Path(BASE_DIR / "cookiesFile" / file) for file in account_file]
+    files = [Path(BASE_DIR / "videoFile" / file) for file in files]
+    if enableTimer:
+        publish_datetimes = generate_schedule_time_next_day(len(files), videos_per_day, daily_times,start_days)
+    else:
+        publish_datetimes = [0 for i in range(len(files))]
+    for index, file in enumerate(files):
+        for cookie in account_file:
+            print(f"文件路径{str(file)}")
+            # 打印视频文件名、标题和 hashtag
+            print(f"视频文件名：{file}")
+            print(f"标题：{title}")
+            print(f"Hashtag：{tags}")
+            app = TiktokVideo(title, str(file), tags, publish_datetimes[index], cookie, thumbnail_path)
+            asyncio.run(app.main(), debug=False)
 
 
 # post_video("333",["demo.mp4"],"d","d")

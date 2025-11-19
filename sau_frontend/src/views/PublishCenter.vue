@@ -88,16 +88,18 @@
           <!-- 上传选项弹窗 -->
           <el-dialog
             v-model="uploadOptionsVisible"
-            title="选择上传方式"
+            :title="isThumbnailUpload ? '选择缩略图上传方式' : '选择上传方式'"
             width="400px"
             class="upload-options-dialog"
+            @close="handleUploadDialogClose"
           >
             <div class="upload-options-content">
               <el-button type="primary" @click="selectLocalUpload" class="option-btn">
                 <el-icon><Upload /></el-icon>
-                本地上传
+                {{ isThumbnailUpload ? '本地上传' : '本地上传' }}
               </el-button>
-              <el-button type="success" @click="selectMaterialLibrary" class="option-btn">
+              <!-- 只有视频上传才显示素材库选项 -->
+              <el-button v-if="!isThumbnailUpload" type="success" @click="selectMaterialLibrary" class="option-btn">
                 <el-icon><Folder /></el-icon>
                 素材库
               </el-button>
@@ -107,7 +109,7 @@
           <!-- 本地上传弹窗 -->
           <el-dialog
             v-model="localUploadVisible"
-            title="本地上传"
+            :title="isThumbnailUpload ? '上传缩略图' : '本地上传'"
             width="600px"
             class="local-upload-dialog"
           >
@@ -118,17 +120,17 @@
               :action="`${apiBaseUrl}/upload`"
               :on-success="(response, file) => handleUploadSuccess(response, file, currentUploadTab)"
               :on-error="handleUploadError"
-              multiple
-              accept="video/*"
+              :multiple="!isThumbnailUpload"
+              :accept="isThumbnailUpload ? 'image/*' : 'video/*'"
               :headers="authHeaders"
             >
               <el-icon class="el-icon--upload"><Upload /></el-icon>
               <div class="el-upload__text">
-                将视频文件拖到此处，或<em>点击上传</em>
+                {{ isThumbnailUpload ? '将图片文件拖到此处，或<em>点击上传</em>' : '将视频文件拖到此处，或<em>点击上传</em>' }}
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  支持MP4、AVI等视频格式，可上传多个文件
+                  {{ isThumbnailUpload ? '支持JPG、PNG等图片格式' : '支持MP4、AVI等视频格式，可上传多个文件' }}
                 </div>
               </template>
             </el-upload>
@@ -326,6 +328,28 @@
             />
           </div>
 
+          <!-- 缩略图 (仅在TikTok可见) -->
+          <div v-if="tab.selectedPlatform === 6" class="thumbnail-section">
+            <h3>缩略图</h3>
+            <div class="upload-options">
+              <el-button type="primary" @click="showThumbnailUploadOptions(tab)" class="upload-btn">
+                <el-icon><Upload /></el-icon>
+                上传缩略图
+              </el-button>
+            </div>
+
+            <!-- 已上传缩略图 -->
+            <div v-if="tab.thumbnailPath" class="uploaded-thumbnail">
+              <h4>已上传缩略图：</h4>
+              <div class="thumbnail-item">
+                <el-link :href="getThumbnailPreviewUrl(tab.thumbnailPath)" target="_blank" type="primary">
+                  {{ getThumbnailFileName(tab.thumbnailPath) }}
+                </el-link>
+                <el-button type="danger" size="small" @click="removeThumbnail(tab)">删除</el-button>
+              </div>
+            </div>
+          </div>
+
           <!-- 标题输入 -->
           <div class="title-section">
             <h3>标题</h3>
@@ -411,27 +435,6 @@
             </template>
           </el-dialog>
 
-          <!-- 标签 (仅在抖音可见) -->
-          <div v-if="tab.selectedPlatform === 3" class="product-section">
-            <h3>商品链接</h3>
-            <el-input
-              v-model="tab.productTitle"
-              type="text"
-              :rows="1"
-              placeholder="请输入商品名称"
-              maxlength="200"
-              class="product-name-input"
-            />
-            <el-input
-              v-model="tab.productLink"
-              type="text"
-              :rows="1"
-              placeholder="请输入商品链接"
-              maxlength="200"
-              class="product-link-input"
-            />
-          </div>
-
           <!-- 定时发布 -->
           <div class="schedule-section">
             <h3>定时发布</h3>
@@ -509,6 +512,7 @@ import { ElMessage } from 'element-plus'
 import { useAccountStore } from '@/stores/account'
 import { useAppStore } from '@/stores/app'
 import { materialApi } from '@/api/material'
+import { storeToRefs } from 'pinia'
 
 // API base URL
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5409'
@@ -527,6 +531,10 @@ let tabCounter = 1
 // 获取应用状态管理
 const appStore = useAppStore()
 
+// 获取账号状态管理
+const accountStore = useAccountStore()
+const { platformTypes } = storeToRefs(accountStore)
+
 // 上传相关状态
 const uploadOptionsVisible = ref(false)
 const localUploadVisible = ref(false)
@@ -534,19 +542,20 @@ const materialLibraryVisible = ref(false)
 const currentUploadTab = ref(null)
 const selectedMaterials = ref([])
 const materials = computed(() => appStore.materials)
+const isThumbnailUpload = ref(false)
 
 // 批量发布相关状态
 const batchPublishing = ref(false)
 const batchPublishMessage = ref('')
 const batchPublishType = ref('info')
 
-// 平台列表 - 对应后端type字段
-const platforms = [
-  { key: 3, name: '抖音' },
-  { key: 4, name: '快手' },
-  { key: 2, name: '视频号' },
-  { key: 1, name: '小红书' }
-]
+// 动态平台列表 - 对应后端type字段
+const platforms = computed(() => {
+  return Object.entries(platformTypes.value).map(([key, name]) => ({
+    key: parseInt(key),
+    name: name
+  }))
+})
 
 const defaultTabInit = {
   name: 'tab1',
@@ -565,7 +574,8 @@ const defaultTabInit = {
   startDays: 0, // 从今天开始计算的发布天数，0表示明天，1表示后天
   publishStatus: null, // 发布状态，包含message和type
   publishing: false, // 发布状态，用于控制按钮loading效果
-  isDraft: false // 是否保存为草稿，仅视频号平台可见
+  isDraft: false, // 是否保存为草稿，仅视频号平台可见
+  thumbnailPath: '' // 缩略图路径，仅TikTok平台使用
 }
 
 // helper to create a fresh deep-copied tab from defaultTabInit
@@ -593,14 +603,9 @@ const accountStore = useAccountStore()
 
 // 根据选择的平台获取可用账号列表
 const availableAccounts = computed(() => {
-  const platformMap = {
-    3: '抖音',
-    2: '视频号',
-    1: '小红书',
-    4: '快手'
-  }
-  const currentPlatform = currentTab.value ? platformMap[currentTab.value.selectedPlatform] : null
-  return currentPlatform ? accountStore.accounts.filter(acc => acc.platform === currentPlatform) : []
+  // 使用 platformTypes 反向映射获取平台名称
+  const platformName = platformTypes.value[currentTab.value?.selectedPlatform];
+  return platformName ? accountStore.accounts.filter(acc => acc.platform === platformName) : []
 })
 
 // 话题相关状态
@@ -643,27 +648,36 @@ const handleUploadSuccess = (response, file, tab) => {
     const filePath = response.data.path || response.data
     // 从路径中提取文件名
     const filename = filePath.split('/').pop()
-    
-    // 保存文件信息到fileList，包含文件路径和其他信息
-    const fileInfo = {
-      name: file.name,
-      url: materialApi.getMaterialPreviewUrl(filename), // 使用getMaterialPreviewUrl生成预览URL
-      path: filePath,
-      size: file.size,
-      type: file.type
+
+    if (isThumbnailUpload.value) {
+      // 处理缩略图上传
+      tab.thumbnailPath = filename  // 只保存文件名，不包含路径前缀
+      isThumbnailUpload.value = false  // 重置缩略图上传模式
+      ElMessage.success('缩略图上传成功')
+      console.log('缩略图上传成功:', filename)
+    } else {
+      // 处理视频文件上传
+      // 保存文件信息到fileList，包含文件路径和其他信息
+      const fileInfo = {
+        name: file.name,
+        url: materialApi.getMaterialPreviewUrl(filename), // 使用getMaterialPreviewUrl生成预览URL
+        path: filePath,
+        size: file.size,
+        type: file.type
+      }
+
+      // 添加到文件列表
+      tab.fileList.push(fileInfo)
+
+      // 更新显示列表
+      tab.displayFileList = [...tab.fileList.map(item => ({
+        name: item.name,
+        url: item.url
+      }))]
+
+      ElMessage.success('文件上传成功')
+      console.log('上传成功:', fileInfo)
     }
-    
-    // 添加到文件列表
-    tab.fileList.push(fileInfo)
-    
-    // 更新显示列表
-    tab.displayFileList = [...tab.fileList.map(item => ({
-      name: item.name,
-      url: item.url
-    }))]
-    
-    ElMessage.success('文件上传成功')
-    console.log('上传成功:', fileInfo)
   } else {
     ElMessage.error(response.msg || '上传失败')
   }
@@ -823,6 +837,7 @@ const confirmPublish = async (tab) => {
       category: 0, //表示非原创
       productLink: tab.productLink.trim() || '', // 商品链接
       productTitle: tab.productTitle.trim() || '', // 商品名称
+      thumbnail: tab.thumbnailPath || '', // 缩略图路径，仅抖音和TikTok平台使用
       isDraft: tab.isDraft // 是否保存为草稿，仅视频号平台使用
     }
 
@@ -875,6 +890,14 @@ const confirmPublish = async (tab) => {
 // 显示上传选项
 const showUploadOptions = (tab) => {
   currentUploadTab.value = tab
+  uploadOptionsVisible.value = true
+}
+
+// 显示缩略图上传选项
+const showThumbnailUploadOptions = (tab) => {
+  currentUploadTab.value = tab
+  // 设置为缩略图上传模式
+  isThumbnailUpload.value = true
   uploadOptionsVisible.value = true
 }
 
@@ -1032,6 +1055,39 @@ const batchPublish = async () => {
     batchPublishing.value = false
     isCancelled.value = false
   }
+}
+
+// 显示缩略图上传选项
+const showThumbnailUploadOptions = (tab) => {
+  currentUploadTab.value = tab
+  uploadOptionsVisible.value = true
+}
+
+// 获取缩略图预览URL
+const getThumbnailPreviewUrl = (thumbnailPath) => {
+  if (!thumbnailPath) return ''
+  // 如果是完整URL，直接返回；否则拼接基础URL
+  if (thumbnailPath.startsWith('http')) {
+    return thumbnailPath
+  }
+  return `${apiBaseUrl}/thumbnail/${thumbnailPath}`
+}
+
+// 获取缩略图文件名
+const getThumbnailFileName = (thumbnailPath) => {
+  if (!thumbnailPath) return ''
+  return thumbnailPath.split('/').pop()
+}
+
+// 处理上传对话框关闭
+const handleUploadDialogClose = () => {
+  isThumbnailUpload.value = false
+}
+
+// 删除缩略图
+const removeThumbnail = (tab) => {
+  tab.thumbnailPath = ''
+  ElMessage.success('缩略图已删除')
 }
 </script>
 
