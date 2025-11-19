@@ -1054,10 +1054,9 @@ const batchPublish = async () => {
   }
 }
 
-// 显示缩略图上传选项
-const showThumbnailUploadOptions = (tab) => {
-  currentUploadTab.value = tab
-  uploadOptionsVisible.value = true
+// 处理上传对话框关闭
+const handleUploadDialogClose = () => {
+  isThumbnailUpload.value = false
 }
 
 // 获取缩略图预览URL
@@ -1074,11 +1073,6 @@ const getThumbnailPreviewUrl = (thumbnailPath) => {
 const getThumbnailFileName = (thumbnailPath) => {
   if (!thumbnailPath) return ''
   return thumbnailPath.split('/').pop()
-}
-
-// 处理上传对话框关闭
-const handleUploadDialogClose = () => {
-  isThumbnailUpload.value = false
 }
 
 // 删除缩略图
