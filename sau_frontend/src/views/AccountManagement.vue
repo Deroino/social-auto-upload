@@ -8,7 +8,7 @@
       <el-tabs v-model="activeTab" class="account-tabs-nav">
         <el-tab-pane label="全部" name="all" />
         <el-tab-pane
-          v-for="platformName in Object.values(platformTypes)"
+          v-for="platformName in platformTypes ? Object.values(platformTypes) : []"
           :key="platformName"
           :label="platformName"
           :name="platformName"
@@ -98,7 +98,7 @@
             :disabled="dialogType === 'edit' || sseConnecting"
           >
             <el-option
-              v-for="platformName in Object.values(platformTypes)"
+              v-for="platformName in platformTypes ? Object.values(platformTypes) : []"
               :key="platformName"
               :label="platformName"
               :value="platformName"
