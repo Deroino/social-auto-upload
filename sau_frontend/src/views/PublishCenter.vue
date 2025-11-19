@@ -598,9 +598,6 @@ const accountDialogVisible = ref(false)
 const tempSelectedAccounts = ref([])
 const currentTab = ref(null)
 
-// 获取账号状态管理
-const accountStore = useAccountStore()
-
 // 根据选择的平台获取可用账号列表
 const availableAccounts = computed(() => {
   // 使用 platformTypes 反向映射获取平台名称
