@@ -12,7 +12,6 @@
           :key="platformName"
           :label="platformName"
           :name="platformName"
-          v-if="platformTypes"
         />
       </el-tabs>
 
@@ -97,7 +96,6 @@
             placeholder="请选择平台"
             style="width: 100%"
             :disabled="dialogType === 'edit' || sseConnecting"
-            v-if="platformTypes"
           >
             <el-option
               v-for="platformName in Object.values(platformTypes)"
@@ -163,7 +161,7 @@ import { useAppStore } from '@/stores/app'
 
 // 获取账号状态管理
 const accountStore = useAccountStore()
-const { platformTypes } = storeToRefs(accountStore)
+const platformTypes = accountStore.platformTypes
 // 获取应用状态管理
 const appStore = useAppStore()
 

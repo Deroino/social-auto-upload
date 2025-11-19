@@ -533,7 +533,7 @@ const appStore = useAppStore()
 
 // 获取账号状态管理
 const accountStore = useAccountStore()
-const { platformTypes } = storeToRefs(accountStore)
+const platformTypes = accountStore.platformTypes
 
 // 上传相关状态
 const uploadOptionsVisible = ref(false)
@@ -551,7 +551,7 @@ const batchPublishType = ref('info')
 
 // 动态平台列表 - 对应后端type字段
 const platforms = computed(() => {
-  return Object.entries(platformTypes.value).map(([key, name]) => ({
+  return Object.entries(platformTypes).map(([key, name]) => ({
     key: parseInt(key),
     name: name
   }))
@@ -601,7 +601,7 @@ const currentTab = ref(null)
 // 根据选择的平台获取可用账号列表
 const availableAccounts = computed(() => {
   // 使用 platformTypes 反向映射获取平台名称
-  const platformName = platformTypes.value[currentTab.value?.selectedPlatform];
+  const platformName = platformTypes[currentTab.value?.selectedPlatform];
   return platformName ? accountStore.accounts.filter(acc => acc.platform === platformName) : []
 })
 
