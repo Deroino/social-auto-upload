@@ -113,7 +113,7 @@
 ## ☁️一键部署云端
 
 ### 一键部署到RESVRL
-[RUN ON RESVRL IMAGE]
+ <img src="static/deploy-on-resvrl.png" alt="Deploy On Resvrl" width="180">
 注意部署该项目后,为了保证访问安全性,请务必开启[平台级访问保护]选项
 
 
